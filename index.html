@@ -157,20 +157,19 @@
 
         let bingoState = {};
         
-        // Option 3 layout - fixed arrangement for consistency
-        function getFixedLayout() {
-            return [
-                "Bihar", "Excellent", "Scauser", "Aura", "Sent a dash",
-                "Bt", "Time inversion (tenet)", "Mental", "Where that cheese at", "Sink",
-                "Shambutri", "Locked in", "Kashtam", "Insane", "Tate Mcrae",
-                "Glabella", "Wee bit", "Epstein", "Boo", "Some of that dash action",
-                "\"Ret me be creer\"", "Vwani", "Belted", "China", "My man/our main man"
-            ];
+        // Generate truly random grid - different for each person
+        function shuffleArray(array) {
+            const arr = [...array];
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
         }
 
         function initializeGame() {
             const grid = document.getElementById('bingoGrid');
-            const wordsLayout = getFixedLayout();
+            const shuffledWords = shuffleArray(shreyasWords);
             
             // Load saved state from localStorage
             const savedState = localStorage.getItem('bingoState');
@@ -182,7 +181,7 @@
             for (let i = 0; i < 25; i++) {
                 const cell = document.createElement('button');
                 cell.className = 'bingo-cell';
-                cell.textContent = wordsLayout[i];
+                cell.textContent = shuffledWords[i];
                 cell.dataset.index = i;
                 
                 // Apply saved state if exists
