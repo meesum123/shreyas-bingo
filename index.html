@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shreyas Bingo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        
+        .bingo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 2px;
+            margin-bottom: 20px;
+            background-color: #ddd;
+            border-radius: 5px;
+            padding: 2px;
+        }
+        
+        .bingo-cell {
+            background-color: white;
+            border: none;
+            padding: 15px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            font-size: 14px;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-wrap: break-word;
+            hyphens: auto;
+        }
+        
+        .bingo-cell:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .bingo-cell.highlighted {
+            background-color: #4a4a4a;
+            color: white;
+        }
+        
+        .bingo-cell.highlighted:hover {
+            background-color: #333;
+        }
+        
+        .bingo-cell.winning {
+            background-color: #28a745 !important;
+            color: white;
+        }
+        
+        .bingo-cell.winning:hover {
+            background-color: #218838 !important;
+        }
+        
+        .controls {
+            text-align: center;
+        }
+        
+        .reset-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .reset-btn:hover {
+            background-color: #c82333;
+        }
+        
+        /* Mobile responsiveness */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .bingo-cell {
+                padding: 10px 3px;
+                font-size: 12px;
+                min-height: 50px;
+            }
+            
+            h1 {
+                font-size: 24px;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎉 Shreyas Bingo 🎉</h1>
+        <div class="bingo-grid" id="bingoGrid"></div>
+        <div class="controls">
+            <button class="reset-btn" onclick="resetGame()">Reset Game</button>
+        </div>
+    </div>
+
+    <script>
+        // Shreyas's phrases for the bingo game
+        const shreyasWords = [
+            "Sink",
+            "Wee bit",
+            "Sent a dash",
+            "Some of that dash action",
+            "Kashtam",
+            "Bt",
+            "My man/our main man",
+            "Where that cheese at",
+            "Aura",
+            "Vwani",
+            "Belted",
+            "Glabella",
+            "China",
+            "Mental",
+            "Insane",
+            "Excellent",
+            "\"Ret me be creer\"",
+            "Boo",
+            "Locked in",
+            "Epstein",
+            "Scauser",
+            "Shambutri",
+            "Tate Mcrae",
+            "Time inversion (tenet)",
+            "Bihar"
+        ];
+
+        let bingoState = {};
+        
+        // Option 3 layout - fixed arrangement for consistency
+        function getFixedLayout() {
+            return [
+                "Bihar", "Excellent", "Scauser", "Aura", "Sent a dash",
+                "Bt", "Time inversion (tenet)", "Mental", "Where that cheese at", "Sink",
+                "Shambutri", "Locked in", "Kashtam", "Insane", "Tate Mcrae",
+                "Glabella", "Wee bit", "Epstein", "Boo", "Some of that dash action",
+                "\"Ret me be creer\"", "Vwani", "Belted", "China", "My man/our main man"
+            ];
+        }
+
+        function initializeGame() {
+            const grid = document.getElementById('bingoGrid');
+            const wordsLayout = getFixedLayout();
+            
+            // Load saved state from localStorage
+            const savedState = localStorage.getItem('bingoState');
+            if (savedState) {
+                bingoState = JSON.parse(savedState);
+            }
+
+            // Create grid cells
+            for (let i = 0; i < 25; i++) {
+                const cell = document.createElement('button');
+                cell.className = 'bingo-cell';
+                cell.textContent = wordsLayout[i];
+                cell.dataset.index = i;
+                
+                // Apply saved state if exists
+                if (bingoState[i]) {
+                    cell.classList.add('highlighted');
+                }
+                
+                cell.addEventListener('click', function() {
+                    toggleCell(this, i);
+                });
+                
+                grid.appendChild(cell);
+            }
+        }
+
+        function toggleCell(cell, index) {
+            cell.classList.toggle('highlighted');
+            
+            // Update state
+            bingoState[index] = cell.classList.contains('highlighted');
+            
+            // Save to localStorage
+            localStorage.setItem('bingoState', JSON.stringify(bingoState));
+            
+            // Check for winning patterns
+            checkWinningPatterns();
+        }
+
+        function checkWinningPatterns() {
+            const cells = document.querySelectorAll('.bingo-cell');
+            
+            // Clear any existing winning highlights
+            cells.forEach(cell => cell.classList.remove('winning'));
+            
+            // Define winning patterns (indices for 5x5 grid)
+            const winningPatterns = [
+                // Rows
+                [0, 1, 2, 3, 4],
+                [5, 6, 7, 8, 9],
+                [10, 11, 12, 13, 14],
+                [15, 16, 17, 18, 19],
+                [20, 21, 22, 23, 24],
+                // Columns
+                [0, 5, 10, 15, 20],
+                [1, 6, 11, 16, 21],
+                [2, 7, 12, 17, 22],
+                [3, 8, 13, 18, 23],
+                [4, 9, 14, 19, 24],
+                // Diagonals
+                [0, 6, 12, 18, 24],  // Top-left to bottom-right
+                [4, 8, 12, 16, 20]   // Top-right to bottom-left
+            ];
+            
+            // Check each pattern
+            winningPatterns.forEach(pattern => {
+                const isComplete = pattern.every(index => bingoState[index]);
+                
+                if (isComplete) {
+                    // Highlight the winning pattern in green
+                    pattern.forEach(index => {
+                        cells[index].classList.add('winning');
+                    });
+                }
+            });
+        }
+
+        function resetGame() {
+            // Clear visual state
+            const cells = document.querySelectorAll('.bingo-cell');
+            cells.forEach(cell => {
+                cell.classList.remove('highlighted');
+            });
+            
+            // Clear saved state
+            bingoState = {};
+            localStorage.removeItem('bingoState');
+            
+            console.log('Game reset!');
+        }
+
+        // Initialize the game when page loads
+        window.addEventListener('load', initializeGame);
+    </script>
+</body>
+</html>
