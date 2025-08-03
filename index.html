@@ -156,6 +156,8 @@
         ];
 
         let bingoState = {};
+        let currentLayout = [];
+        const LAYOUT_VERSION = "v2_random"; // Version identifier for layout changes
         
         // Generate truly random grid - different for each person
         function shuffleArray(array) {
@@ -169,19 +171,38 @@
 
         function initializeGame() {
             const grid = document.getElementById('bingoGrid');
-            const shuffledWords = shuffleArray(shreyasWords);
             
-            // Load saved state from localStorage
-            const savedState = localStorage.getItem('bingoState');
-            if (savedState) {
-                bingoState = JSON.parse(savedState);
+            // Check if we need to clear old data (version mismatch)
+            const savedVersion = localStorage.getItem('layoutVersion');
+            const savedLayout = localStorage.getItem('bingoLayout');
+            
+            if (savedVersion !== LAYOUT_VERSION) {
+                // Clear everything for version upgrade and generate new layout
+                localStorage.clear();
+                currentLayout = shuffleArray(shreyasWords);
+                localStorage.setItem('bingoLayout', JSON.stringify(currentLayout));
+                localStorage.setItem('layoutVersion', LAYOUT_VERSION);
+                bingoState = {};
+            } else if (savedLayout) {
+                // Load existing layout and state (same version)
+                currentLayout = JSON.parse(savedLayout);
+                const savedState = localStorage.getItem('bingoState');
+                if (savedState) {
+                    bingoState = JSON.parse(savedState);
+                }
+            } else {
+                // First time user - generate new layout
+                currentLayout = shuffleArray(shreyasWords);
+                localStorage.setItem('bingoLayout', JSON.stringify(currentLayout));
+                localStorage.setItem('layoutVersion', LAYOUT_VERSION);
+                bingoState = {};
             }
 
             // Create grid cells
             for (let i = 0; i < 25; i++) {
                 const cell = document.createElement('button');
                 cell.className = 'bingo-cell';
-                cell.textContent = shuffledWords[i];
+                cell.textContent = currentLayout[i];
                 cell.dataset.index = i;
                 
                 // Apply saved state if exists
@@ -262,9 +283,9 @@
                 cell.classList.remove('highlighted', 'winning');
             });
             
-            // Clear saved state
+            // Clear saved state but keep layout
             bingoState = {};
-            localStorage.removeItem('bingoState');
+            localStorage.setItem('bingoState', JSON.stringify(bingoState));
             
             console.log('Game reset!');
         }
